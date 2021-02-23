@@ -1,8 +1,10 @@
 import numpy as np
-# from batchgenerators.examples.brats2017.config import brats_preprocessed_folder, \
+# from batchgenerators.examples.brats2017.config2020 import brats_preprocessed_folder, \
 #     brats_folder_with_downloaded_train_data, num_threads_for_brats_example
+from config2020 import  brats_preprocessed_folder, \
+    brats_folder_with_downloaded_train_data, num_threads_for_brats_example
 
-from batchgenerators.examples.brats2017.config import num_threads_for_brats_example
+# from batchgenerators.examples.brats2017.config import num_threads_for_brats_example
 from batchgenerators.utilities.file_and_folder_operations import *
 
 try:
@@ -39,6 +41,35 @@ def get_list_of_files(base_dir):
             assert all((isfile(i) for i in this_case)), "some file is missing for patient %s; make sure the following " \
                                                         "files are there: %s" % (p, str(this_case))
             list_of_lists.append(this_case)
+    print("Found %d patients" % len(list_of_lists))
+    return list_of_lists
+
+
+def get_list_of_files_2020(base_dir):
+    """
+    returns a list of lists containing the filenames. The outer list contains all training examples. Each entry in the
+    outer list is again a list pointing to the files of that training example in the following order:
+    T1, T1c, T2, FLAIR, segmentation
+    :param base_dir:
+    :return:
+    """
+    list_of_lists = []
+    # current_directory = join(base_dir, glioma_type)
+    current_directory = base_dir
+    print(current_directory)
+    patients = subfolders(current_directory, join=False)
+    for p in patients:
+        # print(p)
+        patient_directory = join(current_directory, p)
+        t1_file = join(patient_directory, p + "_t1.nii.gz")
+        t1c_file = join(patient_directory, p + "_t1ce.nii.gz")
+        t2_file = join(patient_directory, p + "_t2.nii.gz")
+        flair_file = join(patient_directory, p + "_flair.nii.gz")
+        seg_file = join(patient_directory, p + "_seg.nii.gz")
+        this_case = [t1_file, t1c_file, t2_file, flair_file, seg_file]
+        assert all((isfile(i) for i in this_case)), "some file is missing for patient %s; make sure the following " \
+                                                    "files are there: %s" % (p, str(this_case))
+        list_of_lists.append(this_case)
     print("Found %d patients" % len(list_of_lists))
     return list_of_lists
 
@@ -159,17 +190,18 @@ if __name__ == "__main__":
 
     # Why is this not an IPython Notebook you may ask? Because I HATE IPython Notebooks. Simple :-)
 
-    brats_preprocessed_folder = "C:/Users/JiachennCJC/Documents/GitHub/batchgenerators/BraTS2018_preprocessed"
-    brats_folder_with_downloaded_train_data = "C:/Users/JiachennCJC/Downloads/BraTS2018_DataTraining_Downloaded"
+    # brats_preprocessed_folder = "C:/Users/JiachennCJC/Documents/GitHub/batchgenerators/BraTS2018_preprocessed"
+    # brats_folder_with_downloaded_train_data = "C:/Users/JiachennCJC/Downloads/BraTS2018_DataTraining_Downloaded"
 
-    list_of_lists = get_list_of_files(brats_folder_with_downloaded_train_data)
+    list_of_lists = get_list_of_files_2020(brats_folder_with_downloaded_train_data)
     # print(list_of_lists[0])
 
     maybe_mkdir_p(brats_preprocessed_folder)
 
     # patient_names = [i[0].split("/")[-2] for i in list_of_lists]
-    windows_patient_names = [i[0].split("\\")[2] for i in list_of_lists] 
+    windows_patient_names = [i[0].split("\\")[-2] for i in list_of_lists] 
     # print(windows_patient_names)
+
 
     p = Pool(processes=num_threads_for_brats_example)
     # # p.starmap(load_and_preprocess, zip(list_of_lists, patient_names, [brats_preprocessed_folder] * len(list_of_lists)))
@@ -180,11 +212,11 @@ if __name__ == "__main__":
     p.close()
     p.join()
 
-    # # remember that we cropped the data before preprocessing. If we predict the test cases, we want to run the same
-    # # preprocessing for them. We need to then put the segmentation back into its original position (due to cropping).
-    # # Here is how you can do that:
+    # remember that we cropped the data before preprocessing. If we predict the test cases, we want to run the same
+    # preprocessing for them. We need to then put the segmentation back into its original position (due to cropping).
+    # Here is how you can do that:
 
-    # # lets use Brats17_2013_0_1 for this example
+    # lets use Brats17_2013_0_1 for this example
     # img = np.load(join(brats_preprocessed_folder, "Brats17_2013_0_1.npy"))
     # metadata = load_pickle(join(brats_preprocessed_folder, "Brats17_2013_0_1.pkl"))
     # # remember that we changed the segmentation labels from 0, 1, 2, 4 to 0, 1, 2, 3. We need to change that back to
