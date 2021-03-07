@@ -1,10 +1,5 @@
 import numpy as np
-# from batchgenerators.examples.brats2017.config2020 import brats_preprocessed_folder, \
-#     brats_folder_with_downloaded_train_data, num_threads_for_brats_example
-from config2020 import  brats_preprocessed_folder, \
-    brats_folder_with_downloaded_train_data, num_threads_for_brats_example
-
-# from batchgenerators.examples.brats2017.config import num_threads_for_brats_example
+from config2020 import brats_preprocessed_destination_folder_2020, brats_folder_with_downloaded_data_2020, num_threads_for_brats_example
 from batchgenerators.utilities.file_and_folder_operations import *
 
 try:
@@ -56,10 +51,9 @@ def get_list_of_files_2020(base_dir):
     list_of_lists = []
     # current_directory = join(base_dir, glioma_type)
     current_directory = base_dir
-    print(current_directory)
+    print("Current dir: ",current_directory)
     patients = subfolders(current_directory, join=False)
     for p in patients:
-        # print(p)
         patient_directory = join(current_directory, p)
         t1_file = join(patient_directory, p + "_t1.nii.gz")
         t1c_file = join(patient_directory, p + "_t1ce.nii.gz")
@@ -67,6 +61,7 @@ def get_list_of_files_2020(base_dir):
         flair_file = join(patient_directory, p + "_flair.nii.gz")
         seg_file = join(patient_directory, p + "_seg.nii.gz")
         this_case = [t1_file, t1c_file, t2_file, flair_file, seg_file]
+        # this_case = [t1_file, t1c_file, t2_file, flair_file]
         assert all((isfile(i) for i in this_case)), "some file is missing for patient %s; make sure the following " \
                                                     "files are there: %s" % (p, str(this_case))
         list_of_lists.append(this_case)
@@ -75,6 +70,9 @@ def get_list_of_files_2020(base_dir):
 
 
 def load_and_preprocess(case, patient_name, output_folder):
+
+    # print("in patient name: ", patient_name)
+    # print("in output folder: ", output_folder)
     """
     loads, preprocesses and saves a case
     This is what happens here:
@@ -142,6 +140,9 @@ def load_and_preprocess(case, patient_name, output_folder):
 
     # now save as npz
     np.save(join(output_folder, patient_name + ".npy"), imgs_npy)
+    # print("Output folder end: ", join(output_folder, patient_name + ".npy"))
+    # print("\n")
+
 
     metadata = {
         'spacing': spacing,
@@ -190,24 +191,20 @@ if __name__ == "__main__":
 
     # Why is this not an IPython Notebook you may ask? Because I HATE IPython Notebooks. Simple :-)
 
-    # brats_preprocessed_folder = "C:/Users/JiachennCJC/Documents/GitHub/batchgenerators/BraTS2018_preprocessed"
-    # brats_folder_with_downloaded_train_data = "C:/Users/JiachennCJC/Downloads/BraTS2018_DataTraining_Downloaded"
+    print("Preprocess destination folder: ",brats_preprocessed_destination_folder_2020)
+    list_of_lists = get_list_of_files_2020(brats_folder_with_downloaded_data_2020)
 
-    list_of_lists = get_list_of_files_2020(brats_folder_with_downloaded_train_data)
-    # print(list_of_lists[0])
-
-    maybe_mkdir_p(brats_preprocessed_folder)
+    maybe_mkdir_p(brats_folder_with_downloaded_data_2020)
 
     # patient_names = [i[0].split("/")[-2] for i in list_of_lists]
-    windows_patient_names = [i[0].split("\\")[-2] for i in list_of_lists] 
-    # print(windows_patient_names)
-
+    # windows_patient_names = [i[0].split("\\")[-2] for i in list_of_lists] 
+    windows_patient_names = [i[0].split("\\")[0].split("/")[-1] for i in list_of_lists] 
+    print(len(windows_patient_names))
 
     p = Pool(processes=num_threads_for_brats_example)
-    # # p.starmap(load_and_preprocess, zip(list_of_lists, patient_names, [brats_preprocessed_folder] * len(list_of_lists)))
 
-    # For windows systems
-    p.starmap(load_and_preprocess, zip(list_of_lists, windows_patient_names, [brats_preprocessed_folder] * len(list_of_lists)))
+    # For windows systems - just change folder name
+    p.starmap(load_and_preprocess, zip(list_of_lists, windows_patient_names, [brats_preprocessed_destination_folder_2020] * len(list_of_lists)))
 
     p.close()
     p.join()
